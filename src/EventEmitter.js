@@ -1,4 +1,4 @@
- //定义EventEmitter对象
+//定义EventEmitter对象
 function EventEmitter() {
     /**
      * 事件总线，用于承载事件及其对应的任务
@@ -39,6 +39,31 @@ proto.on = function (eventName, listener, isOnce) {
 
 //事件注册方法别名
 proto.addListener = proto.on;
+
+//注册只执行一次的事件监听器
+proto.once = function (eventName, listener) {
+    this.on(eventName, listener, true);
+};
+
+//向eventName的任务队列前面插入listener
+proto.prependListener = function (eventName, listener, isOnce) {
+    //参数缺失
+    if (!eventName || !listener) return;
+    //event事件对应的任务队列
+    var taskList = this._events[eventName] || [];
+    //向event的任务队列头部插入任务
+    taskList.unshift({
+        listener: listener,
+        //是否只执行一次，默认为false
+        once: isOnce ? true : false,
+    });
+    this._events[eventName] = taskList;
+};
+
+//向eventName的监听器队列头部插入只执行一次的listener
+proto.prependOnceListener = function (eventName, listener) {
+    this.prependListener(eventName, listener, true);
+};
 
 //销毁事件 从指定监听器数组中删除一个监听器
 proto.off = function (eventName, listener) {
@@ -109,7 +134,8 @@ proto.emit = function (eventName) {
     });
 };
 
-//只执行一次的事件
-proto.once = function (eventName, listener) {
-    this.on(eventName, listener, true);
+//返回指定事件的监听器数组
+proto.listeners = function (eventName) {
+    if (!eventName) return;
+    return this._events[eventName];
 };
